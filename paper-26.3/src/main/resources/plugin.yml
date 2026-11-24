@@ -1,0 +1,20 @@
+name: WeaponSystem
+version: '${version}'
+main: io.github.ybaf100.weapon.WeaponPlugin
+api-version: '26.3'
+description: 무기 파편 뽑기, 조합, 강화, 진화, 고유능력 시스템
+depend: [Vault]
+
+commands:
+  무기:
+    description: 무기 메뉴를 엽니다.
+    aliases: [weapon]
+  무기관리:
+    description: 무기 시스템 관리 명령어
+    aliases: [weaponadmin]
+    permission: weaponsystem.admin
+
+permissions:
+  weaponsystem.admin:
+    description: /무기관리 사용
+    default: op

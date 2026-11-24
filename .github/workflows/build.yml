@@ -11,17 +11,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # JDK 25: Paper 26.3 모듈 컴파일용 (Gradle toolchain)
+      # JDK 21: Gradle 실행과 1.19.4 모듈 (마지막에 적은 버전이 기본 JAVA_HOME)
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: |
+            25
+            21
 
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Build
-        run: ./gradlew build --no-daemon
+        run: ./gradlew build --no-daemon -Porg.gradle.java.installations.fromEnv=JAVA_HOME_25_X64
 
       - uses: actions/upload-artifact@v4
         with:
-          name: WeaponSystem
-          path: build/libs/*.jar
+          name: WeaponSystem-1.19.4
+          path: paper-1.19.4/build/libs/*.jar
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WeaponSystem-26.3
+          path: paper-26.3/build/libs/*.jar
