@@ -70,6 +70,13 @@ public final class SellService {
      * 팔 수 없는 아이템은 그대로 둔다.
      */
     public Sale sell(Player player, Inventory inventory, int fromSlot, int toSlot) {
+        return sell(player, inventory, fromSlot, toSlot, false);
+    }
+
+    /**
+     * @param explainUnsold true면 팔지 못한 아이템과 그 이유를 알려 준다 (판매함, 손에 든 아이템).
+     */
+    public Sale sell(Player player, Inventory inventory, int fromSlot, int toSlot, boolean explainUnsold) {
         Economy economy = plugin.economy();
         if (economy == null) {
             Text.send(player, "&c경제 플러그인이 없어 판매할 수 없습니다.");
@@ -78,6 +85,9 @@ public final class SellService {
         Sale sale = preview(inventory, fromSlot, toSlot);
         if (sale.isEmpty()) {
             Text.send(player, "&c팔 수 있는 아이템이 없습니다. &7(/판매 가격 으로 가격표를 볼 수 있습니다)");
+            if (explainUnsold) {
+                explainUnsold(player, inventory, fromSlot, toSlot);
+            }
             return sale;
         }
         if (!economy.depositPlayer(player, sale.total()).transactionSuccess()) {
@@ -90,7 +100,30 @@ public final class SellService {
             }
         }
         report(player, sale);
+        if (explainUnsold) {
+            explainUnsold(player, inventory, fromSlot, toSlot);
+        }
         return sale;
+    }
+
+    /** 칸에 남은(팔지 못한) 아이템을 이유별로 알려 준다. */
+    private void explainUnsold(Player player, Inventory inventory, int fromSlot, int toSlot) {
+        Map<String, Component> byReason = new LinkedHashMap<>();
+        for (int i = fromSlot; i < toSlot; i++) {
+            ItemStack item = inventory.getItem(i);
+            String reason = prices().unsellableReason(item);
+            if (reason == null) {
+                continue;
+            }
+            Component name = item.getItemMeta() != null && item.getItemMeta().hasDisplayName()
+                    ? item.getItemMeta().displayName()
+                    : Component.translatable(item.getType().translationKey(), NamedTextColor.WHITE);
+            Component entry = name.append(Component.text(" ×" + item.getAmount(), NamedTextColor.GRAY));
+            byReason.merge(reason, entry, (a, b) -> a.append(Component.text(", ", NamedTextColor.DARK_GRAY)).append(b));
+        }
+        for (Map.Entry<String, Component> entry : byReason.entrySet()) {
+            player.sendMessage(Text.c(Text.PREFIX + "&c판매 불가 &7(" + entry.getKey() + ") ").append(entry.getValue()));
+        }
     }
 
     /** 빠른 판매: 플레이어 인벤토리(핫바 포함, 갑옷과 왼손 제외)의 팔 수 있는 아이템을 모두 판다. */
@@ -101,7 +134,7 @@ public final class SellService {
     /** 손에 든 아이템만 판다. */
     public Sale sellHand(Player player) {
         int slot = player.getInventory().getHeldItemSlot();
-        return sell(player, player.getInventory(), slot, slot + 1);
+        return sell(player, player.getInventory(), slot, slot + 1, true);
     }
 
     private void report(Player player, Sale sale) {

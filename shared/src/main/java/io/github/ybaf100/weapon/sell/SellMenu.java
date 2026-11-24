@@ -84,7 +84,7 @@ public final class SellMenu implements InventoryHolder {
                 refresh();
             }
             case SELL -> {
-                plugin.sell().sell(player, inventory, 0, BOX_SIZE);
+                plugin.sell().sell(player, inventory, 0, BOX_SIZE, true);
                 refresh();
             }
             case CLOSE -> player.closeInventory();

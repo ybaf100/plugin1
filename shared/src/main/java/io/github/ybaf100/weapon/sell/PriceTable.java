@@ -70,6 +70,23 @@ public final class PriceTable {
         return prices.getOrDefault(item.getType(), 0.0);
     }
 
+    /** 팔 수 없는 이유. 팔 수 있으면 null. */
+    public String unsellableReason(ItemStack item) {
+        if (item == null || item.getType().isAir()) {
+            return null;
+        }
+        if (GearItems.isGear(item)) {
+            return "시스템 장비";
+        }
+        if (!isPlain(item)) {
+            return "이름, 로어, 인챈트가 있는 아이템";
+        }
+        if (prices.getOrDefault(item.getType(), 0.0) <= 0) {
+            return "가격표에 없는 아이템";
+        }
+        return null;
+    }
+
     public double unitPrice(Material material) {
         return prices.getOrDefault(material, 0.0);
     }
