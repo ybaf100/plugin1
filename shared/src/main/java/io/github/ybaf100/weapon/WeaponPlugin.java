@@ -6,11 +6,16 @@ import io.github.ybaf100.weapon.combat.PurifyListener;
 import io.github.ybaf100.weapon.combat.StatTask;
 import io.github.ybaf100.weapon.combat.StatusEffects;
 import io.github.ybaf100.weapon.command.AdminCommand;
+import io.github.ybaf100.weapon.command.SellCommand;
 import io.github.ybaf100.weapon.command.WeaponCommand;
 import io.github.ybaf100.weapon.compat.Compat;
 import io.github.ybaf100.weapon.data.PlayerDataManager;
 import io.github.ybaf100.weapon.item.GearItems;
 import io.github.ybaf100.weapon.item.ProtectionListener;
+import io.github.ybaf100.weapon.sell.PriceTable;
+import io.github.ybaf100.weapon.sell.SellListener;
+import io.github.ybaf100.weapon.sell.SellMenu;
+import io.github.ybaf100.weapon.sell.SellService;
 import io.github.ybaf100.weapon.service.WeaponActions;
 import java.util.Objects;
 import java.util.Random;
@@ -33,6 +38,8 @@ public final class WeaponPlugin extends JavaPlugin implements Listener {
     private Economy economy;
     private WeaponActions actions;
     private WeaponUi ui;
+    private PriceTable prices;
+    private SellService sell;
 
     @Override
     public void onEnable() {
@@ -40,6 +47,9 @@ public final class WeaponPlugin extends JavaPlugin implements Listener {
         data = new PlayerDataManager(this);
         status = new StatusEffects();
         actions = new WeaponActions(this);
+        prices = new PriceTable(this);
+        getLogger().info("판매 가격 " + prices.load() + "개를 읽었습니다.");
+        sell = new SellService(this);
         hookEconomy();
 
         var pm = getServer().getPluginManager();
@@ -48,11 +58,15 @@ public final class WeaponPlugin extends JavaPlugin implements Listener {
         pm.registerEvents(new CombatListener(this), this);
         pm.registerEvents(new ActiveListener(this), this);
         pm.registerEvents(new PurifyListener(), this);
+        pm.registerEvents(new SellListener(this), this);
 
         Objects.requireNonNull(getCommand("무기")).setExecutor(new WeaponCommand(this));
         AdminCommand admin = new AdminCommand(this);
         Objects.requireNonNull(getCommand("무기관리")).setExecutor(admin);
         Objects.requireNonNull(getCommand("무기관리")).setTabCompleter(admin);
+        SellCommand sellCommand = new SellCommand(this);
+        Objects.requireNonNull(getCommand("판매")).setExecutor(sellCommand);
+        Objects.requireNonNull(getCommand("판매")).setTabCompleter(sellCommand);
 
         ui = Compat.createUi(this);
         ui.enable();
@@ -66,6 +80,7 @@ public final class WeaponPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        SellMenu.closeAll();
         if (ui != null) {
             ui.disable();
         }
@@ -114,6 +129,14 @@ public final class WeaponPlugin extends JavaPlugin implements Listener {
 
     public WeaponUi ui() {
         return ui;
+    }
+
+    public PriceTable prices() {
+        return prices;
+    }
+
+    public SellService sell() {
+        return sell;
     }
 
     /** Vault 경제. 없으면 null. */

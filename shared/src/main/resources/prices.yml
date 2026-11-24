@@ -1,0 +1,55 @@
+# 판매 가격표 (개당 가격, 원)
+# - 목록에 없거나 0인 아이템은 팔 수 없습니다.
+# - 이름이 붙었거나 인챈트, 로어가 있는 아이템, 시스템 장비는 팔리지 않습니다.
+# - 고친 뒤 /무기관리 리로드 로 다시 읽습니다.
+#
+# 기준: 고급 뽑기 1회 = 50,000원
+#   다이아몬드 약 63개, 철 주괴 약 1,000개, 밀 약 6,250개
+
+crops:
+  WHEAT: 8
+  CARROT: 5
+  POTATO: 5
+  BEETROOT: 6
+  MELON_SLICE: 3
+  MELON: 27
+  PUMPKIN: 20
+  SUGAR_CANE: 4
+  COCOA_BEANS: 6
+  NETHER_WART: 6
+  SWEET_BERRIES: 3
+  GLOW_BERRIES: 4
+  CACTUS: 4
+  BAMBOO: 1
+  KELP: 1
+  HAY_BLOCK: 72
+
+ores:
+  COAL: 20
+  RAW_COPPER: 15
+  COPPER_INGOT: 20
+  RAW_IRON: 40
+  IRON_INGOT: 50
+  RAW_GOLD: 80
+  GOLD_INGOT: 100
+  REDSTONE: 15
+  LAPIS_LAZULI: 30
+  QUARTZ: 25
+  AMETHYST_SHARD: 20
+  DIAMOND: 800
+  EMERALD: 600
+  NETHERITE_SCRAP: 3000
+
+ore_blocks:
+  COAL_BLOCK: 180
+  RAW_COPPER_BLOCK: 135
+  COPPER_BLOCK: 180
+  RAW_IRON_BLOCK: 360
+  IRON_BLOCK: 450
+  RAW_GOLD_BLOCK: 720
+  GOLD_BLOCK: 900
+  REDSTONE_BLOCK: 135
+  LAPIS_BLOCK: 270
+  QUARTZ_BLOCK: 100
+  DIAMOND_BLOCK: 7200
+  EMERALD_BLOCK: 5400

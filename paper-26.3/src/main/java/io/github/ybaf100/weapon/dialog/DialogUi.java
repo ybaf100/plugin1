@@ -16,6 +16,7 @@ import io.github.ybaf100.weapon.model.GearType;
 import io.github.ybaf100.weapon.model.Grade;
 import io.github.ybaf100.weapon.model.ShardType;
 import io.github.ybaf100.weapon.model.Ticket;
+import io.github.ybaf100.weapon.sell.SellMenu;
 import io.github.ybaf100.weapon.service.WeaponActions;
 import io.github.ybaf100.weapon.util.Fmt;
 import io.github.ybaf100.weapon.util.Text;
@@ -89,7 +90,8 @@ public final class DialogUi implements WeaponUi {
                 button("&c진화", "손에 든 장비의 등급을 올립니다.", (p, v) -> evolve(p, null)),
                 button("&b무기 조합", "무기 파편으로 장비와 아이템을 만듭니다.", (p, v) -> craft(p, null)),
                 button("&d무기 고유능력", "손에 든 장비의 고유능력을 강화하거나 바꿉니다.", (p, v) -> ability(p, null)),
-                button("&e인벤토리", "보유한 파편과 아이템을 확인합니다.", (p, v) -> storage(p)));
+                button("&e인벤토리", "보유한 파편과 아이템을 확인합니다.", (p, v) -> storage(p)),
+                button("&2판매", "농작물과 광물을 팝니다. (/판매 전체 로 빠른 판매)", (p, v) -> new SellMenu(plugin, p).open()));
         show(player, "&a무기 메뉴", body, List.of(), menu(buttons, closeButton("닫기"), 2));
     }
 

@@ -2,6 +2,7 @@ package io.github.ybaf100.weapon.gui;
 
 import io.github.ybaf100.weapon.WeaponPlugin;
 import io.github.ybaf100.weapon.item.Items;
+import io.github.ybaf100.weapon.sell.SellMenu;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
@@ -26,5 +27,7 @@ public final class MainMenu extends Menu {
                 e -> new AbilityMenu(plugin, player).open());
         set(16, Items.button(Material.CHEST, "&e&l인벤토리", " ", "&e보유한 무기 파편과 아이템을 확인합니다."),
                 e -> new StorageMenu(plugin, player).open());
+        set(22, Items.button(Material.EMERALD, "&2&l판매", " ", "&2농작물과 광물을 팝니다.", "&7/판매 전체 로 빠르게 팔 수도 있습니다."),
+                e -> new SellMenu(plugin, player).open());
     }
 }

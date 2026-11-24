@@ -32,10 +32,11 @@ import org.bukkit.entity.Player;
  * 장비 &lt;플레이어&gt; &lt;종류&gt; [등급] [강화]
  * 확인 &lt;플레이어&gt;
  * 초기화 &lt;플레이어&gt;
+ * 리로드                       판매 가격표(prices.yml) 다시 읽기
  * </pre>
  */
 public final class AdminCommand implements TabExecutor {
-    private static final List<String> SUBS = List.of("파편", "마일리지", "아이템", "장비", "확인", "초기화");
+    private static final List<String> SUBS = List.of("파편", "마일리지", "아이템", "장비", "확인", "초기화", "리로드");
 
     private final WeaponPlugin plugin;
 
@@ -46,6 +47,10 @@ public final class AdminCommand implements TabExecutor {
     @Override
     @SuppressWarnings("deprecation")
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (args.length >= 1 && args[0].equals("리로드")) {
+            Text.send(sender, "&a판매 가격 " + plugin.prices().load() + "개를 다시 읽었습니다.");
+            return true;
+        }
         if (args.length < 2) {
             help(sender, label);
             return true;
@@ -141,6 +146,7 @@ public final class AdminCommand implements TabExecutor {
         Text.send(sender, "&e/" + label + " 장비 <플레이어> <종류> [등급] [강화]");
         Text.send(sender, "&e/" + label + " 확인 <플레이어>");
         Text.send(sender, "&e/" + label + " 초기화 <플레이어>");
+        Text.send(sender, "&e/" + label + " 리로드 &7판매 가격표 다시 읽기");
     }
 
     @Override

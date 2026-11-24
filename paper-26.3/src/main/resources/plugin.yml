@@ -9,6 +9,10 @@ commands:
   무기:
     description: 무기 메뉴를 엽니다.
     aliases: [weapon]
+  판매:
+    description: 농작물, 광물 판매 (판매함, 빠른 판매)
+    aliases: [sell]
+    usage: /판매 [전체|손|가격]
   무기관리:
     description: 무기 시스템 관리 명령어
     aliases: [weaponadmin]
