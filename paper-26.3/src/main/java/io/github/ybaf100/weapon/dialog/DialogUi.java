@@ -32,15 +32,18 @@ import io.papermc.paper.registry.data.dialog.type.DialogType;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import net.kyori.adventure.text.event.ClickCallback;
+import net.kyori.adventure.title.Title;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitTask;
 
 /** 최신 버전: 상자 GUI 대신 마인크래프트 대화창(Dialog)으로 메뉴를 띄운다. */
 public final class DialogUi implements WeaponUi {
@@ -51,8 +54,13 @@ public final class DialogUi implements WeaponUi {
             .lifetime(Duration.ofMinutes(15))
             .build();
 
+    /** 결과 공개: 이 간격(틱)마다 결과창을 다시 띄우고, 최대 이 횟수 안에 모두 보여 준다. */
+    private static final long REVEAL_INTERVAL_TICKS = 3;
+    private static final int REVEAL_STEPS = 14;
+
     private final WeaponPlugin plugin;
     private final WeaponActions actions;
+    private final Map<UUID, BukkitTask> reveals = new HashMap<>();
 
     public DialogUi(WeaponPlugin plugin) {
         this.plugin = plugin;
@@ -65,6 +73,8 @@ public final class DialogUi implements WeaponUi {
 
     @Override
     public void disable() {
+        reveals.values().forEach(BukkitTask::cancel);
+        reveals.clear();
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.closeDialog();
         }
@@ -128,7 +138,7 @@ public final class DialogUi implements WeaponUi {
         ActionButton yes = button("&a확인", null, (p, v) -> {
             WeaponActions.GachaOutcome result = actions.buyGacha(p, product);
             if (result.outcome().ok()) {
-                gachaResult(p, product, result);
+                startReveal(p, product, result);
             } else {
                 gacha(p, result.outcome().message());
             }
@@ -137,28 +147,83 @@ public final class DialogUi implements WeaponUi {
         show(player, product.displayName(), body, List.of(), DialogType.confirmation(yes, no));
     }
 
-    private void gachaResult(Player player, Product product, WeaponActions.GachaOutcome result) {
+    /** 결과를 몇 개씩 묶어 차례로 보여 준다. 결과 자체는 이미 정해져 저장된 상태다. */
+    private void startReveal(Player player, Product product, WeaponActions.GachaOutcome result) {
+        cancelReveal(player);
+        int total = result.rolls().size();
+        int step = Math.max(1, (total + REVEAL_STEPS - 1) / REVEAL_STEPS);
+        int[] shown = {0};
+        BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            if (!player.isOnline()) {
+                cancelReveal(player);
+                return;
+            }
+            int before = shown[0];
+            shown[0] = Math.min(total, before + step);
+            ShardType best = null;
+            for (int i = before; i < shown[0]; i++) {
+                ShardType type = result.rolls().get(i).type();
+                if (best == null || type.ordinal() > best.ordinal()) {
+                    best = type;
+                }
+            }
+            WeaponActions.playGachaSound(player, best);
+            if (best == ShardType.S || best == ShardType.SP) {
+                player.showTitle(Title.title(Text.c(best.displayName() + "!"),
+                        Text.c("&7" + product.displayName() + "&7에서 획득"),
+                        Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(1500), Duration.ofMillis(400))));
+            }
+            gachaResult(player, product, result, shown[0]);
+            if (shown[0] >= total) {
+                cancelReveal(player);
+            }
+        }, 0L, REVEAL_INTERVAL_TICKS);
+        reveals.put(player.getUniqueId(), task);
+    }
+
+    private void cancelReveal(Player player) {
+        BukkitTask task = reveals.remove(player.getUniqueId());
+        if (task != null) {
+            task.cancel();
+        }
+    }
+
+    private void gachaResult(Player player, Product product, WeaponActions.GachaOutcome result, int revealed) {
+        int total = result.rolls().size();
+        boolean done = revealed >= total;
         Map<ShardType, Integer> counts = new EnumMap<>(ShardType.class);
         long overflow = 0;
-        for (WeaponActions.GachaRoll roll : result.rolls()) {
+        ShardType best = null;
+        for (int i = 0; i < revealed; i++) {
+            WeaponActions.GachaRoll roll = result.rolls().get(i);
             counts.merge(roll.type(), 1, Integer::sum);
             overflow += roll.overflowMileage();
+            if (best == null || roll.type().ordinal() > best.ordinal()) {
+                best = roll.type();
+            }
         }
         List<DialogBody> body = new ArrayList<>();
-        body.add(text("&7" + product.displayName() + " &7· " + product.count() + "개"));
+        body.add(text("&7" + product.displayName() + " &7· " + total + "개" + (done ? "" : " &e(" + revealed + " / " + total + ")")));
+        if (best == ShardType.S || best == ShardType.SP) {
+            body.add(text(best.color() + "&l★ " + best.label() + "급 무기 파편! ★"));
+        }
         counts.forEach((type, n) -> body.add(DialogBody.item(new ItemStack(Compat.material(type.material()), Math.min(64, n)))
                 .description(DialogBody.plainMessage(Text.c(type.displayName() + " &f×" + n), TEXT_WIDTH))
                 .showTooltip(false)
                 .build()));
-        if (overflow > 0) {
+        if (done && overflow > 0) {
             body.add(text("&d최대 보유량 초과분 +" + Fmt.money(overflow) + " 마일리지"));
         }
-        body.add(text(walletLine(player)));
+        if (done) {
+            body.add(text(walletLine(player)));
+        }
 
-        List<ActionButton> buttons = List.of(
-                button("&6한 번 더", null, (p, v) -> confirmGacha(p, product)),
-                button("돌아가기", null, (p, v) -> gacha(p, null)));
-        show(player, "&6뽑기 결과", body, List.of(), menu(buttons, null, 2));
+        List<ActionButton> buttons = done
+                ? List.of(
+                        button("&6한 번 더", null, (p, v) -> confirmGacha(p, product)),
+                        button("돌아가기", null, (p, v) -> gacha(p, null)))
+                : List.of(button("건너뛰기", null, (p, v) -> gachaResult(p, product, result, total)));
+        show(player, "&6뽑기 결과", body, List.of(), menu(buttons, null, done ? 2 : 1));
     }
 
     // ------------------------------------------------------------------ 강화
@@ -418,6 +483,7 @@ public final class DialogUi implements WeaponUi {
             if (audience instanceof Player player) {
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     if (player.isOnline()) {
+                        cancelReveal(player);
                         handler.accept(player, view);
                     }
                 });

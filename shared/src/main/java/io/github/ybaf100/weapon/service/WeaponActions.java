@@ -92,22 +92,17 @@ public final class WeaponActions {
         List<GachaRoll> rolls = new ArrayList<>();
         Map<ShardType, Integer> summary = new EnumMap<>(ShardType.class);
         long overflowTotal = 0;
-        ShardType best = null;
         for (int i = 0; i < product.count(); i++) {
             ShardType type = product.kind().roll(plugin.random());
             long overflow = data.addShards(type, 1);
             overflowTotal += overflow;
             rolls.add(new GachaRoll(type, overflow));
             summary.merge(type, 1, Integer::sum);
-            if (best == null || type.ordinal() > best.ordinal()) {
-                best = type;
-            }
             if (type.ordinal() >= ShardType.A.ordinal()) {
                 Text.broadcast("&f" + player.getName() + "&7님이 " + product.kind().label() + "&7 뽑기에서 "
                         + type.displayName() + "&7을 획득했습니다!");
             }
         }
-        playGachaSound(player, best);
 
         StringBuilder sb = new StringBuilder(paid).append(" &7결과: ");
         summary.forEach((type, n) -> sb.append(type.color()).append(type.label()).append(" &f×").append(n).append("  "));

@@ -3,7 +3,11 @@ package io.github.ybaf100.weapon.gui;
 import io.github.ybaf100.weapon.WeaponPlugin;
 import io.github.ybaf100.weapon.item.Items;
 import io.github.ybaf100.weapon.logic.Gacha.Product;
+import io.github.ybaf100.weapon.model.ShardType;
 import io.github.ybaf100.weapon.service.WeaponActions;
+import io.github.ybaf100.weapon.util.Text;
+import java.time.Duration;
+import net.kyori.adventure.title.Title;
 import io.github.ybaf100.weapon.util.Fmt;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +62,11 @@ public final class GachaResultMenu extends Menu {
         WeaponActions.GachaRoll result = results.get(revealed);
         revealed++;
         WeaponActions.playGachaSound(player, result.type());
+        if (result.type() == ShardType.S || result.type() == ShardType.SP) {
+            player.showTitle(Title.title(Text.c(result.type().displayName() + "!"),
+                    Text.c("&7" + product.displayName() + "&7에서 획득"),
+                    Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(1500), Duration.ofMillis(400))));
+        }
         if (revealed % SLOTS.length == 0 && revealed < results.size()) {
             pause = PAGE_PAUSE_TICKS;
         }
