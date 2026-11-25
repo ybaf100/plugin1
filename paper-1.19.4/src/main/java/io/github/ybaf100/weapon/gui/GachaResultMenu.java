@@ -33,10 +33,15 @@ public final class GachaResultMenu extends Menu {
     private int revealed;
     private BukkitTask task;
 
-    public GachaResultMenu(WeaponPlugin plugin, Player player, Product product, List<WeaponActions.GachaRoll> results) {
+    /** 월드 연출에서 이미 타이틀을 보여 줬으면 false. */
+    private final boolean showTitles;
+
+    public GachaResultMenu(WeaponPlugin plugin, Player player, Product product, List<WeaponActions.GachaRoll> results,
+                           boolean showTitles) {
         super(plugin, player, 6, "&6뽑기 결과");
         this.product = product;
         this.results = results;
+        this.showTitles = showTitles;
     }
 
     @Override
@@ -62,7 +67,7 @@ public final class GachaResultMenu extends Menu {
         WeaponActions.GachaRoll result = results.get(revealed);
         revealed++;
         WeaponActions.playGachaSound(player, result.type());
-        if (result.type() == ShardType.S || result.type() == ShardType.SP) {
+        if (showTitles && (result.type() == ShardType.S || result.type() == ShardType.SP)) {
             player.showTitle(Title.title(Text.c(result.type().displayName() + "!"),
                     Text.c("&7" + product.displayName() + "&7에서 획득"),
                     Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(1500), Duration.ofMillis(400))));

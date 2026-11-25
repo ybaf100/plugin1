@@ -10,6 +10,7 @@ import io.github.ybaf100.weapon.command.SellCommand;
 import io.github.ybaf100.weapon.command.WeaponCommand;
 import io.github.ybaf100.weapon.compat.Compat;
 import io.github.ybaf100.weapon.data.PlayerDataManager;
+import io.github.ybaf100.weapon.fx.GachaFlyIn;
 import io.github.ybaf100.weapon.item.GearItems;
 import io.github.ybaf100.weapon.item.ProtectionListener;
 import io.github.ybaf100.weapon.sell.PriceTable;
@@ -40,6 +41,7 @@ public final class WeaponPlugin extends JavaPlugin implements Listener {
     private WeaponUi ui;
     private PriceTable prices;
     private SellService sell;
+    private GachaFlyIn flyIn;
 
     @Override
     public void onEnable() {
@@ -50,6 +52,7 @@ public final class WeaponPlugin extends JavaPlugin implements Listener {
         prices = new PriceTable(this);
         getLogger().info("판매 가격 " + prices.load() + "개를 읽었습니다.");
         sell = new SellService(this);
+        flyIn = new GachaFlyIn(this);
         hookEconomy();
 
         var pm = getServer().getPluginManager();
@@ -59,6 +62,7 @@ public final class WeaponPlugin extends JavaPlugin implements Listener {
         pm.registerEvents(new ActiveListener(this), this);
         pm.registerEvents(new PurifyListener(), this);
         pm.registerEvents(new SellListener(this), this);
+        pm.registerEvents(flyIn, this);
 
         Objects.requireNonNull(getCommand("무기")).setExecutor(new WeaponCommand(this));
         AdminCommand admin = new AdminCommand(this);
@@ -81,6 +85,9 @@ public final class WeaponPlugin extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         SellMenu.closeAll();
+        if (flyIn != null) {
+            flyIn.stopAll();
+        }
         if (ui != null) {
             ui.disable();
         }
@@ -137,6 +144,10 @@ public final class WeaponPlugin extends JavaPlugin implements Listener {
 
     public SellService sell() {
         return sell;
+    }
+
+    public GachaFlyIn flyIn() {
+        return flyIn;
     }
 
     /** Vault 경제. 없으면 null. */

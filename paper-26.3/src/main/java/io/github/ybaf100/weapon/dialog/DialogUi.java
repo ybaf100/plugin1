@@ -138,7 +138,8 @@ public final class DialogUi implements WeaponUi {
         ActionButton yes = button("&a확인", null, (p, v) -> {
             WeaponActions.GachaOutcome result = actions.buyGacha(p, product);
             if (result.outcome().ok()) {
-                startReveal(p, product, result);
+                // 창이 닫힌 뒤 월드 연출(소용돌이)을 보여 주고 결과 창을 연다. 웅크리면 건너뛴다.
+                plugin.flyIn().play(p, product, result.rolls(), skipped -> startReveal(p, product, result, skipped));
             } else {
                 gacha(p, result.outcome().message());
             }
@@ -148,7 +149,7 @@ public final class DialogUi implements WeaponUi {
     }
 
     /** 결과를 몇 개씩 묶어 차례로 보여 준다. 결과 자체는 이미 정해져 저장된 상태다. */
-    private void startReveal(Player player, Product product, WeaponActions.GachaOutcome result) {
+    private void startReveal(Player player, Product product, WeaponActions.GachaOutcome result, boolean showTitles) {
         cancelReveal(player);
         int total = result.rolls().size();
         int step = Math.max(1, (total + REVEAL_STEPS - 1) / REVEAL_STEPS);
@@ -168,7 +169,7 @@ public final class DialogUi implements WeaponUi {
                 }
             }
             WeaponActions.playGachaSound(player, best);
-            if (best == ShardType.S || best == ShardType.SP) {
+            if (showTitles && (best == ShardType.S || best == ShardType.SP)) {
                 player.showTitle(Title.title(Text.c(best.displayName() + "!"),
                         Text.c("&7" + product.displayName() + "&7에서 획득"),
                         Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(1500), Duration.ofMillis(400))));

@@ -78,7 +78,12 @@ public final class GachaMenu extends Menu {
         WeaponActions.GachaOutcome result = plugin.actions().buyGacha(player, product);
         MenuUtil.show(player, result.outcome());
         if (result.outcome().ok()) {
-            new GachaResultMenu(plugin, player, product, result.rolls()).open();
+            // 메뉴를 닫고 월드 연출(소용돌이)을 보여 준 뒤 결과 창을 연다. 웅크리면 건너뛴다.
+            org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                player.closeInventory();
+                plugin.flyIn().play(player, product, result.rolls(),
+                        skipped -> new GachaResultMenu(plugin, player, product, result.rolls(), skipped).open());
+            });
         }
     }
 }
